@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import FontStore from '@react-pdf/font';
+import { Text } from '@react-pdf/primitives';
 
 import { loadYoga } from '../../src/yoga';
 import resolvePagination from '../../src/steps/resolvePagination';
@@ -16,7 +17,7 @@ describe('pagination step', () => {
   test('should stretch absolute block to full page size', async () => {
     const yoga = await loadYoga();
 
-    const layout = calcLayout({
+    const layout = await calcLayout({
       type: 'DOCUMENT',
       yoga,
       props: {},
@@ -66,7 +67,7 @@ describe('pagination step', () => {
   test('should force new height for split nodes', async () => {
     const yoga = await loadYoga();
 
-    const layout = calcLayout({
+    const layout = await calcLayout({
       type: 'DOCUMENT',
       yoga,
       props: {},
@@ -113,7 +114,7 @@ describe('pagination step', () => {
   test('should force new height for split nodes with fixed height', async () => {
     const yoga = await loadYoga();
 
-    const layout = calcLayout({
+    const layout = await calcLayout({
       type: 'DOCUMENT',
       yoga,
       props: {},
@@ -147,10 +148,158 @@ describe('pagination step', () => {
     expect(view3.box!.height).toBe(10);
   });
 
+  test('should calculate height and keep the page order', async () => {
+    const yoga = await loadYoga();
+
+    const root: SafeDocumentNode = {
+      type: 'DOCUMENT',
+      yoga,
+      props: {},
+      children: [
+        {
+          type: 'PAGE',
+          style: {
+            width: 5,
+            height: 60,
+          },
+          props: {},
+          children: [
+            {
+              type: 'VIEW',
+              style: { height: 18 },
+              props: { fixed: true },
+              children: [],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 30 },
+              props: {},
+              children: [],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 57 },
+              props: {},
+              children: [],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 15 },
+              props: {},
+              children: [],
+            },
+          ],
+        },
+        {
+          type: 'PAGE',
+          style: {
+            height: 50,
+          },
+          props: {},
+          children: [
+            {
+              type: 'VIEW',
+              style: {},
+              props: {
+                fixed: true,
+                render: () => <Text style={{ height: 10 }}>rear window</Text>,
+              },
+              children: [],
+            },
+            {
+              type: 'VIEW',
+              style: { height: 22 },
+              props: {},
+              children: [],
+            },
+          ],
+        },
+        {
+          type: 'PAGE',
+          style: {
+            height: 40,
+          },
+          props: {},
+          children: [
+            {
+              type: 'VIEW',
+              style: { height: 12 },
+              props: {},
+              children: [],
+            },
+          ],
+        },
+        {
+          type: 'PAGE',
+          style: {
+            height: 30,
+          },
+          props: {},
+          children: [
+            {
+              type: 'VIEW',
+              style: {},
+              props: {},
+              children: [],
+            },
+          ],
+        },
+      ],
+    };
+
+    const layout = await calcLayout(root);
+
+    const page1 = layout.children[0];
+    const [view1, view2, view3] = page1.children!;
+
+    const page2 = layout.children[1];
+    const [view4, view5] = page2.children!;
+
+    const page3 = layout.children[2];
+    const [view6, view7, view8] = page3.children!;
+
+    const page4 = layout.children[3];
+    const [view9, view10] = page4.children!;
+
+    const page5 = layout.children[4];
+    const [view11] = page5.children!;
+
+    const page6 = layout.children[5];
+
+    // page 1
+    expect(view1.box?.height).toBe(18); // fixed header
+    expect(view2.box?.height).toBe(30);
+    expect(view3.box?.height).toBe(12);
+    expect(page1.box?.height).toBe(60);
+
+    // page 2
+    expect(view4.box?.height).toBe(18); // fixed header
+    expect(view5.box?.height).toBe(42);
+    expect(page2.box?.height).toBe(60);
+
+    // page 3
+    expect(view6.box?.height).toBe(18); // fixed header
+    expect(view7.box?.height).toBe(3);
+    expect(view8.box?.height).toBe(15);
+    expect(page3.box?.height).toBe(60);
+
+    // page 4
+    expect(view9.box?.height).toBe(10);
+    expect(view10.box?.height).toBe(22);
+    expect(page4.box?.height).toBe(50);
+
+    // page 5
+    expect(page5.box?.height).toBe(40);
+    expect(view11.box?.height).toBe(12);
+
+    // page 6
+    expect(page6.box?.height).toBe(30);
+  });
+
   test('should not wrap page with false wrap prop', async () => {
     const yoga = await loadYoga();
 
-    const layout = calcLayout({
+    const layout = await calcLayout({
       type: 'DOCUMENT',
       yoga,
       props: {},
@@ -182,7 +331,7 @@ describe('pagination step', () => {
   test('should break on a container whose children can not fit on a page', async () => {
     const yoga = await loadYoga();
 
-    const layout = calcLayout({
+    const layout = await calcLayout({
       type: 'DOCUMENT',
       yoga,
       props: {},
