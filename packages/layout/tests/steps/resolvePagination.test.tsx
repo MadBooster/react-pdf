@@ -1,3 +1,4 @@
+import React from 'react'
 import { describe, expect, test } from 'vitest';
 import FontStore from '@react-pdf/font';
 import { Text } from '@react-pdf/primitives';
