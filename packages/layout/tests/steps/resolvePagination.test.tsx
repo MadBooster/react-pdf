@@ -1,7 +1,8 @@
-import React from 'react'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React from 'react';
 import { describe, expect, test } from 'vitest';
 import FontStore from '@react-pdf/font';
-import { Text } from '@react-pdf/primitives';
+import { Text } from '@react-pdf/renderer';
 
 import { loadYoga } from '../../src/yoga';
 import resolvePagination from '../../src/steps/resolvePagination';
@@ -11,7 +12,7 @@ import { SafeDocumentNode } from '../../src/types';
 const fontStore = new FontStore();
 
 // dimensions is required by pagination step and them are calculated here
-const calcLayout = (node: SafeDocumentNode) =>
+const calcLayout = async (node: SafeDocumentNode) =>
   resolvePagination(resolveDimensions(node, fontStore), fontStore);
 
 describe('pagination step', () => {

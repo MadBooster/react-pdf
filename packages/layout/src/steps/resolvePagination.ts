@@ -206,6 +206,7 @@ const resolveDynamicPage = async (
 ) => {
   if (shouldResolveDynamicNodes(page)) {
     const resolvedPage = resolveDynamicNodes(props, page);
+    // @ts-expect-error rework pagination
     const relayoutedPage = await relayoutPage(resolvedPage, fontStore, yoga);
     return relayoutedPage;
   }
@@ -221,7 +222,12 @@ const splitPage = async (
 ): Promise<SafePageNode[]> => {
   const wrapArea = getWrapArea(page);
   const contentArea = getContentArea(page);
-  const dynamicPage = await resolveDynamicPage({ pageNumber }, page, fontStore, yoga);
+  const dynamicPage = await resolveDynamicPage(
+    { pageNumber },
+    page,
+    fontStore,
+    yoga,
+  );
   const height = page.style.height;
 
   const [currentChilds, nextChilds] = splitNodes(
@@ -230,7 +236,7 @@ const splitPage = async (
     dynamicPage.children,
   );
 
-  const relayout = async(node: SafePageNode): Promise<SafePageNode> =>
+  const relayout = async (node: SafePageNode): Promise<SafePageNode> =>
     // @ts-expect-error rework pagination
     relayoutPage(node, fontStore, yoga) as Promise<SafePageNode>;
 
@@ -278,7 +284,7 @@ const assocSubPageData = (subpages, pageIndex) => {
   }));
 };
 
-const dissocSubPageData = page => {
+const dissocSubPageData = (page) => {
   return omit(['pageIndex', 'subPageNumber', 'subPageTotalPages'], page);
 };
 
@@ -298,6 +304,7 @@ const paginate = async (
   let nextPage = splittedPage[1];
 
   while (nextPage !== null) {
+    // eslint-disable-next-line no-await-in-loop
     splittedPage = await splitPage(
       nextPage,
       pageNumber + pages.length,
@@ -348,7 +355,9 @@ const resolvePagination = async (
 
   pages = await Promise.all(
     pages.map(async (...args) =>
-      dissocSubPageData(await resolvePageIndices(fontStore, root.yoga, ...args)),
+      dissocSubPageData(
+        await resolvePageIndices(fontStore, root.yoga, ...args),
+      ),
     ),
   );
 
